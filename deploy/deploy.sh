@@ -7,6 +7,9 @@ ROUTER="root@192.168.1.1"
 LOCAL_DIR="$(cd "$(dirname "$0")/.." && pwd)/www-scanner"
 REMOTE_DIR="/www-scanner"
 
+echo "== Ensuring python3 + urllib are installed (python3-light omits urllib) =="
+ssh "$ROUTER" "apk add python3-light python3-urllib"
+
 echo "== Syncing www-scanner/ to $ROUTER:$REMOTE_DIR =="
 ssh "$ROUTER" "mkdir -p $REMOTE_DIR"
 # Router has no /usr/libexec/sftp-server, so scp's default SFTP transfer fails.

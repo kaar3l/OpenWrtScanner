@@ -23,7 +23,9 @@ an OpenWrt router, served directly off the router via uhttpd + Python3 CGI.
 deploy/deploy.sh
 ```
 
-Requires SSH key access to `root@192.168.1.1` (already set up).
+Requires SSH key access to `root@192.168.1.1` (already set up). The script installs
+`python3-light` and `python3-urllib` on the router if missing — `python3-light`
+alone does not include the `urllib` module, which `scan.py`/`download.py` need.
 
 ## Scanner device
 
