@@ -12,7 +12,7 @@ function renderPreview(url, format, file) {
       : '<img src="' + url + '" alt="Scan preview">';
 
   downloadAreaEl.innerHTML =
-    '<a href="' + url + '" download="' + file + '">Download ' + file + "</a>";
+    '<a href="' + url + '" download="' + file + '">' + t("download") + file + "</a>";
 }
 
 async function loadHistory() {
@@ -25,7 +25,8 @@ async function loadHistory() {
   }
 
   if (!entries.length) {
-    historyGridEl.innerHTML = '<p class="history-empty">No scans yet.</p>';
+    historyGridEl.innerHTML =
+      '<p class="history-empty" data-i18n="historyEmpty">' + t("historyEmpty") + "</p>";
     return;
   }
 
@@ -44,7 +45,7 @@ async function loadHistory() {
     tile.addEventListener("click", () => {
       renderPreview(entry.url, entry.format, entry.file);
       statusEl.classList.remove("error");
-      statusEl.textContent = "Viewing: " + entry.file;
+      statusEl.textContent = t("viewing") + entry.file;
     });
     historyGridEl.appendChild(tile);
   }
@@ -55,7 +56,7 @@ form.addEventListener("submit", async (event) => {
 
   scanButton.disabled = true;
   statusEl.classList.remove("error");
-  statusEl.textContent = "Scanning… this can take a few minutes at high resolution.";
+  statusEl.textContent = t("scanning");
   previewEl.innerHTML = "";
   downloadAreaEl.innerHTML = "";
 
@@ -71,18 +72,18 @@ form.addEventListener("submit", async (event) => {
 
     if (!result.ok) {
       statusEl.classList.add("error");
-      statusEl.textContent = "Error: " + result.error;
+      statusEl.textContent = t("errorPrefix") + translateError(result.error);
       return;
     }
 
-    statusEl.textContent = "Scan saved: " + result.file;
+    statusEl.textContent = t("scanSaved") + result.file;
 
     const format = form.elements["format"].value.toLowerCase();
     renderPreview(result.url, format, result.file);
     loadHistory();
   } catch (err) {
     statusEl.classList.add("error");
-    statusEl.textContent = "Error: " + err.message;
+    statusEl.textContent = t("errorPrefix") + err.message;
   } finally {
     scanButton.disabled = false;
   }

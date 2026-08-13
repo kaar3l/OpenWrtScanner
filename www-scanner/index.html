@@ -1,22 +1,28 @@
 <!doctype html>
-<html lang="en">
+<html lang="et">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Scanner</title>
+  <title>Skanner</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="page">
     <header class="page-header">
-      <h1>Scanner</h1>
-      <p class="subtitle">Canon LiDE 400</p>
+      <div class="page-header-text">
+        <h1 data-i18n="title">Skanner</h1>
+        <p class="subtitle">Canon LiDE 400</p>
+      </div>
+      <div class="lang-switch" role="group" aria-label="Language / Keel">
+        <button type="button" class="lang-btn" data-lang="et">ET</button>
+        <button type="button" class="lang-btn" data-lang="en">EN</button>
+      </div>
     </header>
 
     <section class="card">
       <form id="scan-form" class="scan-form">
         <label>
-          <span>Resolution</span>
+          <span data-i18n="labelResolution">Eraldusvõime</span>
           <select name="resolution" id="resolution">
             <option value="150" selected>150 dpi</option>
             <option value="300">300 dpi</option>
@@ -26,42 +32,43 @@
         </label>
 
         <label>
-          <span>Mode</span>
+          <span data-i18n="labelMode">Režiim</span>
           <select name="mode" id="mode">
-            <option value="Color" selected>Color</option>
-            <option value="Grayscale">Grayscale</option>
+            <option value="Color" data-i18n="modeColor" selected>Värviline</option>
+            <option value="Grayscale" data-i18n="modeGrayscale">Halltoon</option>
           </select>
         </label>
 
         <label>
-          <span>Format</span>
+          <span data-i18n="labelFormat">Formaat</span>
           <select name="format" id="format">
             <option value="PDF" selected>PDF</option>
             <option value="JPG">JPG</option>
           </select>
         </label>
 
-        <button type="submit" id="scan-button">Scan</button>
+        <button type="submit" id="scan-button" data-i18n="scanButton">Skanni</button>
       </form>
     </section>
 
     <section class="card">
-      <h2>Preview</h2>
+      <h2 data-i18n="previewHeading">Eelvaade</h2>
       <p id="status" class="status"></p>
       <div id="preview" class="preview-pane">
-        <p class="preview-placeholder">No scan yet.</p>
+        <p class="preview-placeholder" data-i18n="previewEmpty">Skaneeringut veel pole.</p>
       </div>
       <p id="download-area"></p>
     </section>
 
     <section class="card">
-      <h2>Recent scans</h2>
+      <h2 data-i18n="historyHeading">Viimased skaneeringud</h2>
       <div id="history-grid" class="history-grid">
-        <p class="history-empty">No scans yet.</p>
+        <p class="history-empty" data-i18n="historyEmpty">Skaneeringuid veel pole.</p>
       </div>
     </section>
   </div>
 
+  <script src="i18n.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
