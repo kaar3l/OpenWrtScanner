@@ -15,7 +15,7 @@ ssh "$ROUTER" "mkdir -p $REMOTE_DIR"
 # Router has no /usr/libexec/sftp-server, so scp's default SFTP transfer fails.
 # -O forces the legacy SCP protocol, which the router's ssh does support.
 scp -O -r "$LOCAL_DIR"/* "$ROUTER:$REMOTE_DIR/"
-ssh "$ROUTER" "chmod +x $REMOTE_DIR/cgi-bin/scan.py $REMOTE_DIR/cgi-bin/download.py"
+ssh "$ROUTER" "chmod +x $REMOTE_DIR/cgi-bin/scan.py $REMOTE_DIR/cgi-bin/download.py $REMOTE_DIR/cgi-bin/history.py"
 ssh "$ROUTER" "mkdir -p /overlay/scans"
 
 echo "== Reconfiguring uhttpd (LuCI -> :81, scanner -> :80) =="
