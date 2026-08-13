@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Scanner</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <h1>Scanner</h1>
+
+    <form id="scan-form">
+      <label>
+        Resolution
+        <select name="resolution" id="resolution">
+          <option value="150" selected>150 dpi</option>
+          <option value="300">300 dpi</option>
+          <option value="600">600 dpi</option>
+          <option value="1200">1200 dpi</option>
+        </select>
+      </label>
+
+      <label>
+        Mode
+        <select name="mode" id="mode">
+          <option value="Color" selected>Color</option>
+          <option value="Grayscale">Grayscale</option>
+        </select>
+      </label>
+
+      <label>
+        Format
+        <select name="format" id="format">
+          <option value="PDF" selected>PDF</option>
+          <option value="JPG">JPG</option>
+        </select>
+      </label>
+
+      <button type="submit" id="scan-button">Scan</button>
+    </form>
+
+    <p id="status"></p>
+
+    <div id="preview"></div>
+
+    <p id="download-area"></p>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
