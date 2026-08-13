@@ -1,0 +1,9 @@
+I have set up a openwrt router at 192.168.1.1 user: root password: -
+On the router is connected via usb scanner. Canon Lide.
+Please move Luci to port 81.
+On port 80 make a webpage for scanner server.
+The page should have setting for resolution (150, 300, 600, 1200) Default would be 150.
+The page should have mode: Color or Grayscale. Default: Color.
+Format should be PDF, JPG. Default: PDF.
+The page should have scanned image preview.
+The page should save the scanned document.
