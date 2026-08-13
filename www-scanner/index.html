@@ -2,49 +2,65 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Scanner</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main>
-    <h1>Scanner</h1>
+  <div class="page">
+    <header class="page-header">
+      <h1>Scanner</h1>
+      <p class="subtitle">Canon LiDE 400</p>
+    </header>
 
-    <form id="scan-form">
-      <label>
-        Resolution
-        <select name="resolution" id="resolution">
-          <option value="150" selected>150 dpi</option>
-          <option value="300">300 dpi</option>
-          <option value="600">600 dpi</option>
-          <option value="1200">1200 dpi</option>
-        </select>
-      </label>
+    <section class="card">
+      <form id="scan-form" class="scan-form">
+        <label>
+          <span>Resolution</span>
+          <select name="resolution" id="resolution">
+            <option value="150" selected>150 dpi</option>
+            <option value="300">300 dpi</option>
+            <option value="600">600 dpi</option>
+            <option value="1200">1200 dpi</option>
+          </select>
+        </label>
 
-      <label>
-        Mode
-        <select name="mode" id="mode">
-          <option value="Color" selected>Color</option>
-          <option value="Grayscale">Grayscale</option>
-        </select>
-      </label>
+        <label>
+          <span>Mode</span>
+          <select name="mode" id="mode">
+            <option value="Color" selected>Color</option>
+            <option value="Grayscale">Grayscale</option>
+          </select>
+        </label>
 
-      <label>
-        Format
-        <select name="format" id="format">
-          <option value="PDF" selected>PDF</option>
-          <option value="JPG">JPG</option>
-        </select>
-      </label>
+        <label>
+          <span>Format</span>
+          <select name="format" id="format">
+            <option value="PDF" selected>PDF</option>
+            <option value="JPG">JPG</option>
+          </select>
+        </label>
 
-      <button type="submit" id="scan-button">Scan</button>
-    </form>
+        <button type="submit" id="scan-button">Scan</button>
+      </form>
+    </section>
 
-    <p id="status"></p>
+    <section class="card">
+      <h2>Preview</h2>
+      <p id="status" class="status"></p>
+      <div id="preview" class="preview-pane">
+        <p class="preview-placeholder">No scan yet.</p>
+      </div>
+      <p id="download-area"></p>
+    </section>
 
-    <div id="preview"></div>
-
-    <p id="download-area"></p>
-  </main>
+    <section class="card">
+      <h2>Recent scans</h2>
+      <div id="history-grid" class="history-grid">
+        <p class="history-empty">No scans yet.</p>
+      </div>
+    </section>
+  </div>
 
   <script src="app.js"></script>
 </body>
