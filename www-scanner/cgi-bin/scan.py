@@ -12,13 +12,29 @@ import urllib.parse
 sys.path.insert(0, os.path.dirname(__file__))
 
 from scanlib.naming import make_filename
+from scanlib.rotation import filenames_to_delete
 from scanlib.runner import build_scan_command, run_scan
+from scanlib.safepath import is_safe_scan_filename
 from scanlib.validation import validate_format, validate_mode, validate_resolution
 
 DEVICE = "pixma:04A91912_43A16F"
 SCANS_DIR = "/overlay/scans"
 LOCK_FILE = "/tmp/scan.lock"
 SCAN_TIMEOUT_SECONDS = 300
+HISTORY_KEEP = 10
+
+
+def prune_old_scans():
+    """Delete scans beyond the newest HISTORY_KEEP. Best-effort - a file
+    already gone (e.g. deleted by hand) is not an error."""
+    existing = [
+        name for name in os.listdir(SCANS_DIR) if is_safe_scan_filename(name)
+    ]
+    for name in filenames_to_delete(existing, keep=HISTORY_KEEP):
+        try:
+            os.remove(os.path.join(SCANS_DIR, name))
+        except FileNotFoundError:
+            pass
 
 
 def read_form_body():
@@ -83,6 +99,8 @@ def main():
                 },
             )
             return
+
+        prune_old_scans()
 
         respond_json(
             "200 OK",
