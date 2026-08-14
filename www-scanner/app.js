@@ -7,6 +7,7 @@ const historyGridEl = document.getElementById("history-grid");
 const progressWrapEl = document.getElementById("progress-wrap");
 const progressBarEl = document.getElementById("progress-bar");
 const progressPercentEl = document.getElementById("progress-percent");
+const cancelButton = document.getElementById("cancel-button");
 
 let currentPreviewFile = null;
 let progressTimer = null;
@@ -147,8 +148,13 @@ form.addEventListener("submit", async (event) => {
     const result = await response.json();
 
     if (!result.ok) {
-      statusEl.classList.add("error");
-      statusEl.textContent = t("errorPrefix") + translateError(result.error);
+      if (result.cancelled) {
+        statusEl.classList.remove("error");
+        statusEl.textContent = t("scanCancelled");
+      } else {
+        statusEl.classList.add("error");
+        statusEl.textContent = t("errorPrefix") + translateError(result.error);
+      }
       return;
     }
 
@@ -164,6 +170,17 @@ form.addEventListener("submit", async (event) => {
     stopProgressPolling();
     hideProgress();
     scanButton.disabled = false;
+    cancelButton.disabled = false;
+  }
+});
+
+cancelButton.addEventListener("click", async () => {
+  cancelButton.disabled = true;
+  try {
+    await fetch("/cgi-bin/cancel.py", { method: "POST" });
+  } catch (err) {
+    // best-effort; the scan.py fetch above will resolve either way and
+    // report whatever actually happened
   }
 });
 

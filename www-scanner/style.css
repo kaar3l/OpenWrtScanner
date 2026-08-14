@@ -191,6 +191,22 @@ button:disabled {
   text-align: right;
 }
 
+.cancel-button {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--error);
+  background: transparent;
+  border: 1px solid var(--error);
+  border-radius: 0.4rem;
+  cursor: pointer;
+}
+
+.cancel-button:hover:not(:disabled) {
+  background: var(--error);
+  color: #fff;
+}
+
 .preview-pane {
   border: 1px dashed var(--card-border);
   border-radius: 0.5rem;
