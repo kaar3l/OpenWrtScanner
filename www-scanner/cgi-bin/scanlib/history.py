@@ -2,11 +2,18 @@
 
 Takes already-validated filenames (scan_<YYYYmmdd>_<HHMMSS>.<pdf|jpg>) and
 turns them into JSON-able dicts the frontend renders as a thumbnail grid.
+
+Every scan is physically captured as a JPEG (scan.py always scans to JPEG,
+wrapping it into a PDF afterwards when that's the requested format - see
+scan.py and scanlib.pdfwrap), so every entry has a real thumbnail available:
+- JPG-format scans: the saved file itself is the thumbnail.
+- PDF-format scans: a "<stem>.thumb.jpg" sidecar is the thumbnail, served
+  by thumb.py. It may be missing for scans saved before this existed, or
+  if something went wrong writing it - thumb.py 404s in that case and the
+  frontend falls back to a plain document icon.
 """
 
 import urllib.parse
-
-_IMAGE_FORMATS = {"jpg"}
 
 
 def _parse_timestamp(filename):
@@ -28,12 +35,18 @@ def build_history(filenames, limit=10):
     entries = []
     for name in ordered[:limit]:
         extension = name.rsplit(".", 1)[-1]
+        quoted = urllib.parse.quote(name)
+        thumb_url = (
+            "/cgi-bin/download.py?name=%s"
+            if extension == "jpg"
+            else "/cgi-bin/thumb.py?name=%s"
+        ) % quoted
         entries.append(
             {
                 "file": name,
-                "url": "/cgi-bin/download.py?name=%s" % urllib.parse.quote(name),
+                "url": "/cgi-bin/download.py?name=%s" % quoted,
+                "thumb_url": thumb_url,
                 "format": extension,
-                "is_image": extension in _IMAGE_FORMATS,
                 "timestamp": _parse_timestamp(name),
             }
         )

@@ -24,19 +24,26 @@ class TestBuildHistory(unittest.TestCase):
             ],
         )
 
-    def test_entry_shape(self):
+    def test_entry_shape_pdf(self):
         result = build_history(["scan_20260813_223045.pdf"])
         self.assertEqual(len(result), 1)
         entry = result[0]
         self.assertEqual(entry["file"], "scan_20260813_223045.pdf")
         self.assertEqual(entry["url"], "/cgi-bin/download.py?name=scan_20260813_223045.pdf")
         self.assertEqual(entry["format"], "pdf")
-        self.assertFalse(entry["is_image"])
         self.assertEqual(entry["timestamp"], "2026-08-13 22:30:45")
 
-    def test_jpg_is_image_true(self):
+    def test_pdf_thumb_url_points_at_thumb_endpoint(self):
+        result = build_history(["scan_20260813_223045.pdf"])
+        self.assertEqual(
+            result[0]["thumb_url"], "/cgi-bin/thumb.py?name=scan_20260813_223045.pdf"
+        )
+
+    def test_jpg_thumb_url_is_the_file_itself(self):
         result = build_history(["scan_20260813_223045.jpg"])
-        self.assertTrue(result[0]["is_image"])
+        self.assertEqual(
+            result[0]["thumb_url"], "/cgi-bin/download.py?name=scan_20260813_223045.jpg"
+        )
         self.assertEqual(result[0]["format"], "jpg")
 
     def test_respects_limit(self):
