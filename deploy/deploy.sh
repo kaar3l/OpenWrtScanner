@@ -1,14 +1,28 @@
 #!/bin/sh
-# Deploy the scanner app to the router and reconfigure uhttpd.
-# Usage: deploy/deploy.sh
+# Deploy the scanner app to a router and reconfigure uhttpd.
+# Usage: deploy/deploy.sh [router-ip]   (defaults to 192.168.1.1)
+#
+# Works against both apk-based (OpenWrt 23.05+/24.x+ snapshots) and
+# opkg-based (older 24.x releases) routers - picks whichever is present.
 set -eu
 
-ROUTER="root@192.168.1.1"
+ROUTER_IP="${1:-192.168.1.1}"
+ROUTER="root@$ROUTER_IP"
 LOCAL_DIR="$(cd "$(dirname "$0")/.." && pwd)/www-scanner"
 REMOTE_DIR="/www-scanner"
+PKGS="python3-light python3-urllib libsane sane-daemon sane-frontends sane-pixma"
 
-echo "== Ensuring python3 + urllib are installed (python3-light omits urllib) =="
-ssh "$ROUTER" "apk add python3-light python3-urllib"
+echo "== Deploying to $ROUTER_IP =="
+
+echo "== Ensuring required packages are installed (python3-light omits urllib) =="
+ssh "$ROUTER" "
+  if command -v apk >/dev/null 2>&1; then
+    apk add $PKGS
+  else
+    opkg update >/dev/null 2>&1 || true
+    opkg install $PKGS
+  fi
+"
 
 echo "== Syncing www-scanner/ to $ROUTER:$REMOTE_DIR =="
 ssh "$ROUTER" "mkdir -p $REMOTE_DIR"
@@ -38,4 +52,4 @@ ssh "$ROUTER" '
   /etc/init.d/uhttpd restart
 '
 
-echo "== Done. LuCI: http://192.168.1.1:81  Scanner: http://192.168.1.1/ =="
+echo "== Done. LuCI: http://$ROUTER_IP:81  Scanner: http://$ROUTER_IP/ =="
