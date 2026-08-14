@@ -21,11 +21,13 @@ import datetime
 import fcntl
 import json
 import os
+import subprocess
 import sys
 import urllib.parse
 
 sys.path.insert(0, os.path.dirname(__file__))
 
+from scanlib.devicedetect import pick_device
 from scanlib.naming import make_filename
 from scanlib.pdfwrap import wrap_jpeg_as_pdf
 from scanlib.pidfile import remove_pid, write_pid
@@ -35,7 +37,6 @@ from scanlib.runner import build_scan_command, run_scan_streaming, write_progres
 from scanlib.safepath import is_safe_scan_filename
 from scanlib.validation import validate_format, validate_mode, validate_resolution
 
-DEVICE = "pixma:04A91912_43A16F"
 SCANS_DIR = "/overlay/scans"
 LOCK_FILE = "/tmp/scan.lock"
 PROGRESS_FILE = "/tmp/scan_progress.json"
@@ -92,6 +93,22 @@ def was_cancelled():
     return True
 
 
+def detect_device():
+    """Find the scanner's SANE device string via `scanimage -L`.
+
+    Not hardcoded: the device string embeds a per-unit USB serial number,
+    so it differs between physically identical scanners on different
+    routers - and would go stale if this scanner is ever swapped out or
+    replugged into a different USB path. Detecting fresh on every scan
+    request costs well under a second, negligible next to how long a scan
+    itself takes.
+    """
+    result = subprocess.run(
+        ["scanimage", "-L"], capture_output=True, text=True, timeout=15
+    )
+    return pick_device(result.stdout)
+
+
 def main():
     form = read_form_body()
 
@@ -101,6 +118,12 @@ def main():
         _scan_format, extension = validate_format(form.get("format", ""))
     except ValueError as exc:
         respond_json("400 Bad Request", {"ok": False, "error": str(exc)})
+        return
+
+    try:
+        device = detect_device()
+    except (subprocess.TimeoutExpired, ValueError) as exc:
+        respond_json("500 Internal Server Error", {"ok": False, "error": "Scanner not found: %s" % exc})
         return
 
     os.makedirs(SCANS_DIR, exist_ok=True)
@@ -116,7 +139,7 @@ def main():
     else:
         jpeg_scan_path = output_path
 
-    cmd = build_scan_command(DEVICE, resolution, mode_cli, "jpeg", jpeg_scan_path, progress=True)
+    cmd = build_scan_command(device, resolution, mode_cli, "jpeg", jpeg_scan_path, progress=True)
 
     lock_fh = open(LOCK_FILE, "w")
     try:
