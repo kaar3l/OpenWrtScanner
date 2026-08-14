@@ -159,6 +159,38 @@ button:disabled {
   color: var(--error);
 }
 
+.progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.progress-track {
+  flex: 1;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--tile-bg);
+  border: 1px solid var(--card-border);
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  border-radius: inherit;
+  transition: width 0.3s ease;
+}
+
+.progress-percent {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  min-width: 2.5rem;
+  text-align: right;
+}
+
 .preview-pane {
   border: 1px dashed var(--card-border);
   border-radius: 0.5rem;
@@ -213,16 +245,14 @@ button:disabled {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  cursor: pointer;
-  border: none;
-  background: none;
-  padding: 0;
-  font: inherit;
-  color: inherit;
-  text-align: left;
+}
+
+.history-thumb-wrap {
+  position: relative;
 }
 
 .history-thumb {
+  width: 100%;
   aspect-ratio: 1 / 1;
   border-radius: 0.5rem;
   background: var(--tile-bg);
@@ -232,9 +262,13 @@ button:disabled {
   align-items: center;
   justify-content: center;
   transition: border-color 0.15s ease;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  color: inherit;
 }
 
-.history-tile:hover .history-thumb {
+.history-thumb:hover {
   border-color: var(--accent);
 }
 
@@ -246,6 +280,31 @@ button:disabled {
 
 .history-thumb .doc-icon {
   font-size: 2rem;
+}
+
+.history-delete {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.3rem;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  border: none;
+  background: rgba(17, 24, 39, 0.65);
+  color: #fff;
+  font-size: 0.75rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.85;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+.history-delete:hover {
+  opacity: 1;
+  background: var(--error);
 }
 
 .history-caption {

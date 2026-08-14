@@ -4,8 +4,15 @@ const statusEl = document.getElementById("status");
 const previewEl = document.getElementById("preview");
 const downloadAreaEl = document.getElementById("download-area");
 const historyGridEl = document.getElementById("history-grid");
+const progressWrapEl = document.getElementById("progress-wrap");
+const progressBarEl = document.getElementById("progress-bar");
+const progressPercentEl = document.getElementById("progress-percent");
+
+let currentPreviewFile = null;
+let progressTimer = null;
 
 function renderPreview(url, format, file) {
+  currentPreviewFile = file;
   previewEl.innerHTML =
     format === "pdf"
       ? '<iframe src="' + url + '"></iframe>'
@@ -13,6 +20,46 @@ function renderPreview(url, format, file) {
 
   downloadAreaEl.innerHTML =
     '<a href="' + url + '" download="' + file + '">' + t("download") + file + "</a>";
+}
+
+function clearPreview() {
+  currentPreviewFile = null;
+  previewEl.innerHTML =
+    '<p class="preview-placeholder" data-i18n="previewEmpty">' + t("previewEmpty") + "</p>";
+  downloadAreaEl.innerHTML = "";
+}
+
+function showProgress(percent) {
+  progressWrapEl.hidden = false;
+  progressBarEl.style.width = percent + "%";
+  progressPercentEl.textContent = Math.round(percent) + "%";
+}
+
+function hideProgress() {
+  progressWrapEl.hidden = true;
+}
+
+function stopProgressPolling() {
+  if (progressTimer) {
+    clearInterval(progressTimer);
+    progressTimer = null;
+  }
+}
+
+function startProgressPolling() {
+  stopProgressPolling();
+  showProgress(0);
+  progressTimer = setInterval(async () => {
+    try {
+      const response = await fetch("/cgi-bin/progress.py");
+      const data = await response.json();
+      if (data.status === "running") {
+        showProgress(data.percent || 0);
+      }
+    } catch (err) {
+      // ignore transient poll failures, keep trying until the scan settles
+    }
+  }, 700);
 }
 
 async function loadHistory() {
@@ -32,21 +79,49 @@ async function loadHistory() {
 
   historyGridEl.innerHTML = "";
   for (const entry of entries) {
-    const tile = document.createElement("button");
-    tile.type = "button";
+    const tile = document.createElement("div");
     tile.className = "history-tile";
     tile.innerHTML =
-      '<div class="history-thumb">' +
-      (entry.is_image
-        ? '<img src="' + entry.url + '" alt="' + entry.file + '" loading="lazy">'
-        : '<span class="doc-icon">\u{1F4C4}</span>') +
+      '<div class="history-thumb-wrap">' +
+      '<button type="button" class="history-thumb" aria-label="' + entry.file + '">' +
+      '<img src="' + entry.thumb_url + '" alt="' + entry.file + '" loading="lazy">' +
+      "</button>" +
+      '<button type="button" class="history-delete" aria-label="' + t("deleteButton") + '">✕</button>' +
       "</div>" +
       '<span class="history-caption">' + entry.timestamp + "</span>";
-    tile.addEventListener("click", () => {
+
+    const img = tile.querySelector("img");
+    img.addEventListener("error", () => {
+      img.replaceWith(Object.assign(document.createElement("span"), {
+        className: "doc-icon",
+        textContent: "\u{1F4C4}",
+      }));
+    });
+
+    tile.querySelector(".history-thumb").addEventListener("click", () => {
       renderPreview(entry.url, entry.format, entry.file);
       statusEl.classList.remove("error");
       statusEl.textContent = t("viewing") + entry.file;
     });
+
+    tile.querySelector(".history-delete").addEventListener("click", async (event) => {
+      event.stopPropagation();
+      if (!window.confirm(t("confirmDelete"))) {
+        return;
+      }
+      try {
+        await fetch("/cgi-bin/delete.py?name=" + encodeURIComponent(entry.file), {
+          method: "DELETE",
+        });
+      } catch (err) {
+        // best-effort; loadHistory() below reflects whatever actually happened
+      }
+      if (currentPreviewFile === entry.file) {
+        clearPreview();
+      }
+      loadHistory();
+    });
+
     historyGridEl.appendChild(tile);
   }
 }
@@ -59,6 +134,7 @@ form.addEventListener("submit", async (event) => {
   statusEl.textContent = t("scanning");
   previewEl.innerHTML = "";
   downloadAreaEl.innerHTML = "";
+  startProgressPolling();
 
   const formData = new URLSearchParams(new FormData(form));
 
@@ -85,6 +161,8 @@ form.addEventListener("submit", async (event) => {
     statusEl.classList.add("error");
     statusEl.textContent = t("errorPrefix") + err.message;
   } finally {
+    stopProgressPolling();
+    hideProgress();
     scanButton.disabled = false;
   }
 });

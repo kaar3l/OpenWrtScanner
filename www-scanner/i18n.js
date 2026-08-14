@@ -18,8 +18,8 @@ const TRANSLATIONS = {
     download: "Laadi alla ",
     errScanInProgress: "Skaneerimine juba käib.",
     errScannerNotFound: "Skannerit ei leitud või skaneerimine ebaõnnestus: ",
-    errTimeoutPrefix: "Skaneerimine aegus ",
-    errTimeoutSuffix: " sekundi järel.",
+    deleteButton: "Kustuta",
+    confirmDelete: "Kustuta see skaneering?",
   },
   en: {
     title: "Canon LiDE 400",
@@ -40,8 +40,8 @@ const TRANSLATIONS = {
     download: "Download ",
     errScanInProgress: "Scan already in progress.",
     errScannerNotFound: "Scanner not found or scan failed: ",
-    errTimeoutPrefix: "Scan timed out after ",
-    errTimeoutSuffix: " seconds.",
+    deleteButton: "Delete",
+    confirmDelete: "Delete this scan?",
   },
 };
 
@@ -76,11 +76,6 @@ function translateError(raw) {
   const notFoundPrefix = "Scanner not found or scan failed: ";
   if (raw.startsWith(notFoundPrefix)) {
     return dict.errScannerNotFound + raw.slice(notFoundPrefix.length);
-  }
-
-  const timeoutMatch = raw.match(/^Scan timed out after (\d+)s\.$/);
-  if (timeoutMatch) {
-    return dict.errTimeoutPrefix + timeoutMatch[1] + dict.errTimeoutSuffix;
   }
 
   return raw;
