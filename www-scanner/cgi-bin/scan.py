@@ -8,7 +8,13 @@ output format:
   the history thumbnail), then wrapped into "<stem>.pdf" (see scanlib.pdfwrap).
 
 While scanimage runs, its --progress output is streamed into PROGRESS_FILE
-so a concurrent request to progress.py can report live status.
+so a concurrent request to progress.py can report live status, and its PID
+is written to PID_FILE so a concurrent request to cancel.py can abort it.
+
+If a scan fails (the known "sane_read: Error during device I/O" wedge, or
+anything else) it's retried once automatically before giving up - unless it
+was a timeout or a user-requested cancel, neither of which are worth
+retrying.
 """
 
 import datetime
@@ -22,6 +28,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 from scanlib.naming import make_filename
 from scanlib.pdfwrap import wrap_jpeg_as_pdf
+from scanlib.pidfile import remove_pid, write_pid
 from scanlib.progress import done_state, error_state, running_state
 from scanlib.rotation import filenames_to_delete
 from scanlib.runner import build_scan_command, run_scan_streaming, write_progress_file
@@ -32,7 +39,12 @@ DEVICE = "pixma:04A91912_43A16F"
 SCANS_DIR = "/overlay/scans"
 LOCK_FILE = "/tmp/scan.lock"
 PROGRESS_FILE = "/tmp/scan_progress.json"
+PID_FILE = "/tmp/scan.pid"
+CANCEL_FLAG = "/tmp/scan_cancel"
 HISTORY_KEEP = 10
+SCAN_TIMEOUT_SECONDS = 280  # under uhttpd's script_timeout (300) so we can
+# report a clean JSON error instead of uhttpd force-killing the whole CGI
+MAX_ATTEMPTS = 2
 
 
 def prune_old_scans():
@@ -68,6 +80,16 @@ def respond_json(status_line, payload):
     print("Content-Type: application/json")
     print()
     print(json.dumps(payload))
+
+
+def was_cancelled():
+    if not os.path.exists(CANCEL_FLAG):
+        return False
+    try:
+        os.remove(CANCEL_FLAG)
+    except FileNotFoundError:
+        pass
+    return True
 
 
 def main():
@@ -106,11 +128,41 @@ def main():
             )
             return
 
+        remove_pid(PID_FILE)
+        was_cancelled()  # clear any stale flag left over from a previous run
         write_progress_file(PROGRESS_FILE, running_state(0.0))
 
-        returncode, _percent, stderr_text = run_scan_streaming(cmd, PROGRESS_FILE)
+        stderr_text = ""
+        for attempt in range(1, MAX_ATTEMPTS + 1):
+            returncode, _percent, stderr_text = run_scan_streaming(
+                cmd,
+                PROGRESS_FILE,
+                timeout=SCAN_TIMEOUT_SECONDS,
+                on_start=lambda pid: write_pid(PID_FILE, pid),
+            )
+            remove_pid(PID_FILE)
 
-        if returncode != 0:
+            if returncode == 0:
+                break
+
+            if returncode == "timeout":
+                message = "Scan timed out after %ss." % SCAN_TIMEOUT_SECONDS
+                write_progress_file(PROGRESS_FILE, error_state(message))
+                respond_json("504 Gateway Timeout", {"ok": False, "error": message})
+                return
+
+            if was_cancelled():
+                message = "Scan cancelled."
+                write_progress_file(PROGRESS_FILE, error_state(message))
+                respond_json(
+                    "200 OK", {"ok": False, "cancelled": True, "error": message}
+                )
+                return
+
+            if attempt < MAX_ATTEMPTS:
+                write_progress_file(PROGRESS_FILE, running_state(0.0))
+                continue
+
             message = "Scanner not found or scan failed: %s" % (
                 stderr_text or "unknown error"
             ).strip()
