@@ -1,6 +1,6 @@
 const TRANSLATIONS = {
   et: {
-    title: "Skanner",
+    title: "Canon LiDE 400",
     scanButton: "Skanni",
     labelResolution: "Eraldusvõime",
     labelMode: "Režiim",
@@ -22,7 +22,7 @@ const TRANSLATIONS = {
     errTimeoutSuffix: " sekundi järel.",
   },
   en: {
-    title: "Scanner",
+    title: "Canon LiDE 400",
     scanButton: "Scan",
     labelResolution: "Resolution",
     labelMode: "Mode",
