@@ -1,6 +1,7 @@
 import os
 import subprocess
 import sys
+import threading
 import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "www-scanner", "cgi-bin"))
@@ -99,9 +100,10 @@ class TestRunScan(unittest.TestCase):
 
 
 class FakeStreamingProcess:
-    def __init__(self, stderr_lines, returncode):
+    def __init__(self, stderr_lines, returncode, pid=4242):
         self.stderr = iter(stderr_lines)
         self._returncode = returncode
+        self.pid = pid
 
     def wait(self):
         return self._returncode
@@ -159,6 +161,78 @@ class TestRunScanStreaming(unittest.TestCase):
         self.assertEqual(returncode, 9)
         self.assertEqual(last_percent, 0.0)
         self.assertEqual(stderr_text, lines[0])
+
+    def test_calls_on_start_with_pid(self):
+        def fake_popen(cmd, stdout, stderr, text):
+            return FakeStreamingProcess(["Progress: 5.00%\n"], returncode=0, pid=9999)
+
+        seen_pids = []
+        run_scan_streaming(
+            ["scanimage"],
+            "/tmp/progress.json",
+            popen=fake_popen,
+            write_progress=lambda p, s: None,
+            on_start=seen_pids.append,
+        )
+
+        self.assertEqual(seen_pids, [9999])
+
+
+class FakeHangingProcess:
+    """Simulates a scanimage process that never produces output and never
+    exits on its own - only reacts to kill(), like a real wedged process
+    reacting to SIGKILL. Used to test the timeout watchdog without an
+    actual multi-second sleep in the test."""
+
+    def __init__(self):
+        self.pid = 1234
+        self._killed = threading.Event()
+        self.stderr = self._stderr_iter()
+
+    def _stderr_iter(self):
+        # Blocks here exactly like a real blocked read would, until the
+        # watchdog thread kills us - then stop, as EOF on a closed pipe would.
+        self._killed.wait(timeout=5.0)
+        return
+        yield  # pragma: no cover - makes this a generator
+
+    def kill(self):
+        self._killed.set()
+
+    def wait(self):
+        return -9 if self._killed.is_set() else 0
+
+
+class TestRunScanStreamingTimeout(unittest.TestCase):
+    def test_kills_process_and_reports_timeout_status(self):
+        def fake_popen(cmd, stdout, stderr, text):
+            return FakeHangingProcess()
+
+        returncode, last_percent, stderr_text = run_scan_streaming(
+            ["scanimage"],
+            "/tmp/progress.json",
+            timeout=0.05,
+            popen=fake_popen,
+            write_progress=lambda p, s: None,
+        )
+
+        self.assertEqual(returncode, "timeout")
+        self.assertEqual(last_percent, 0.0)
+        self.assertEqual(stderr_text, "")
+
+    def test_does_not_time_out_a_fast_scan(self):
+        def fake_popen(cmd, stdout, stderr, text):
+            return FakeStreamingProcess(["Progress: 100.00%\n"], returncode=0)
+
+        returncode, last_percent, stderr_text = run_scan_streaming(
+            ["scanimage"],
+            "/tmp/progress.json",
+            timeout=5,
+            popen=fake_popen,
+            write_progress=lambda p, s: None,
+        )
+
+        self.assertEqual(returncode, 0)
 
 
 if __name__ == "__main__":
