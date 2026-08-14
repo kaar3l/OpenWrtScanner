@@ -6,7 +6,7 @@ const TRANSLATIONS = {
     labelMode: "Režiim",
     labelFormat: "Formaat",
     modeColor: "Värviline",
-    modeGrayscale: "Halltoon",
+    modeGrayscale: "Mustvalge",
     previewHeading: "Eelvaade",
     previewEmpty: "Skaneeringut veel pole.",
     historyHeading: "Viimased skaneeringud",
